@@ -152,12 +152,24 @@ end = int(input("Ending page: "))
 print()
 end = min(end, len(doc))
 
+total_number_of_pages = (end - start) + 1
+before_starting = time.perf_counter()
+
 for i in range(start, end+1):
+
+    before_func = time.perf_counter()
 
     # Priting just to track where we at
     print(f"page: {i - start + 1}")
     
     func(file_name, i)
 
+    after_func = time.perf_counter()
+
+    print(f"time required for page {i}: {after_func - before_func:.2f} seconds")
+
     # Waiting 5 seconds not to consume all the RPM tokens
     time.sleep(5)
+
+after_finishing = time.perf_counter()
+print(f"total time required for {total_number_of_pages} pages: {after_finishing - before_starting:.2f} seconds")
