@@ -3,13 +3,22 @@ import tkinter as tk
 from tkinter import filedialog
 import fitz as f
 from PIL import Image
+
 from google import genai
 from google.genai import types
+from google.genai.errors import APIError
+
 import time
 from dotenv import load_dotenv
 
+
 output_name = "latex_transcrition.tex"
-usable_models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
+usable_models = {
+    "gemini-3.6-flash": True, 
+    "gemini-3.5-flash": True,
+    "gemini-3.5-flash-lite": True, 
+    "gemini-3.1-flash-lite": True
+}
 
 load_dotenv()
 style_path = os.getenv("STYLE_PATH")
@@ -74,8 +83,13 @@ def func(file_name: str, page_number: int):
     # Initializing Gemini: the API Key gets loaded from the system environment variables
     client = genai.Client()
 
-    for model in usable_models:
-        print(f"using model: {model}\n")
+    for model, status in usable_models.items():
+
+        if not status:
+            print(f"model {model} not active, skipping")
+            continue
+
+        print(f"trying model: {model}\n")
         try:
             # Sending the prompt and saving the answer
             response = client.models.generate_content(
@@ -90,11 +104,19 @@ def func(file_name: str, page_number: int):
             # If no error has occured, we can exit the loop and proceed with
             # the writing on the file
             break
-        except:
-            # If there was an error during the request, it was probably because 
-            # the number of tokens expired, so we will try another model (basicalli just continuing the cycle)
-            print(f"Error occurred with model {model}, changing model.")
-    
+        except APIError as e:
+            error_msg = str(e)
+
+            # If one of these two strings are in the error message, it means that
+            # the RPD limit has been exceeded, meaning that the current model
+            # will not be able to be used for the entire day.
+
+            # Else, it probably means that there was an error of connection or the RPM/TPM limit
+            # was excedeed: in that case we do nothing since it's a limit that gets resetted way before
+            # the RPD one
+            if "RESOURCE_EXHAUSTED" in error_msg or "Quota excedeed" in error_msg:
+                print(f"model {model} deactivated for the day")
+                usable_models[model] = False
 
     latex_code = response.text
 
