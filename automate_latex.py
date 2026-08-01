@@ -9,7 +9,7 @@ import time
 from dotenv import load_dotenv
 
 output_name = "latex_transcrition.tex"
-gemini_model = "gemini-3.5-flash-lite"
+usable_models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
 
 load_dotenv()
 style_path = os.getenv("STYLE_PATH")
@@ -74,15 +74,27 @@ def func(file_name: str, page_number: int):
     # Initializing Gemini: the API Key gets loaded from the system environment variables
     client = genai.Client()
 
-    # Sending the prompt and saving the answer
-    response = client.models.generate_content(
-        model=gemini_model,
-        contents=[image, user_prompt, pdf_path],
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            temperature=0.1,
-        )
-    )
+    for model in usable_models:
+        print(f"using model: {model}\n")
+        try:
+            # Sending the prompt and saving the answer
+            response = client.models.generate_content(
+                model=model,
+                contents=[image, user_prompt, pdf_path],
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.1,
+                )
+            )
+            
+            # If no error has occured, we can exit the loop and proceed with
+            # the writing on the file
+            break
+        except:
+            # If there was an error during the request, it was probably because 
+            # the number of tokens expired, so we will try another model (basicalli just continuing the cycle)
+            print(f"Error occurred with model {model}, changing model.")
+    
 
     latex_code = response.text
 
@@ -98,23 +110,25 @@ def func(file_name: str, page_number: int):
     # Saving the response (that basically contains only latex code)
     # into a file that will progressively contain all of the info
     with open(output_name, "a", encoding="utf-8") as f_out:
-        f_out.write("\n% --- NUOVA page ---\n\n" + latex_code)
+        f_out.write("\n% --- NEW PAGE ---\n\n" + latex_code)
 
     if os.path.exists(temp_image_path):
         os.remove(temp_image_path)
 
 
-file_name = filedialog.askopenfilename(
-        title="Seleziona il PDF degli appunti",
+file_name = ""
+while (not file_name):
+    file_name = filedialog.askopenfilename(
+        title="Select the Notes PDF",
         filetypes=[("PDF Files", "*.pdf")]
-)
+    )
 
 doc = f.open(file_name)
 
-start = int(input("page di inizio: "))
-end = int(input("page di fine: "))
+start = int(input("Starting page: "))
+end = int(input("Ending page: "))
+print()
 end = min(end, len(doc))
-print(end)
 
 for i in range(start, end+1):
 
