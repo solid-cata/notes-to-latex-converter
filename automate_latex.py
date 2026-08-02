@@ -73,6 +73,11 @@ def func(file_name: str, page_number: int):
     8. Fai forte ed estremamente riferimento alla dispensa di analisi caricata come esempio: devi seguire a pieno
        lo stile di quanto ci fosse già scritto, in modo che la continuazione di tutto sembri naturale, scritta dalla stessa persona.
        Dunque mantieni anche gli stili di indentazione e di uso di grassetti e corsivi.
+    9. Se presenti disegni di grafici o qualsiasi altra cosa che possa essere utile a capire di cosa si sta parlando, trascrivi anche quelli in LaTex
+       usando gli strumenti che più ritieni opportuni, al massimo di garantire una MASSIMA fedeltà della dispensa.
+    10. In caso fosse fornita nella conversione una slide pdf con delle scritte a mano sopra, assicurati di integrarre all'interno del documento
+        tutto ciò che risulta visibile a schermo, dunque prendendo sia le cose scritte nativamente in pdf sia gli appunti aggiunti dopo a mano, 
+        integrandoli tra loro in modo da avere la massima fedeltà e completezza degli appunti.
     """
 
     user_prompt = "Trascrivi fedelmente ed interamente il contenuto di questa page in codice LaTeX."
@@ -89,7 +94,7 @@ def func(file_name: str, page_number: int):
             print(f"model {model} not active, skipping")
             continue
 
-        print(f"trying model: {model}\n")
+        print(f"trying model: {model}")
         try:
             # Sending the prompt and saving the answer
             response = client.models.generate_content(
@@ -149,7 +154,6 @@ doc = f.open(file_name)
 
 start = int(input("Starting page: "))
 end = int(input("Ending page: "))
-print()
 end = min(end, len(doc))
 
 total_number_of_pages = (end - start) + 1
@@ -160,7 +164,7 @@ for i in range(start, end+1):
     before_func = time.perf_counter()
 
     # Priting just to track where we at
-    print(f"page: {i - start + 1}")
+    print(f"\npage: {i - start + 1}")
     
     func(file_name, i)
 
