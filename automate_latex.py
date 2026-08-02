@@ -172,4 +172,7 @@ for i in range(start, end+1):
     time.sleep(5)
 
 after_finishing = time.perf_counter()
-print(f"total time required for {total_number_of_pages} pages: {after_finishing - before_starting:.2f} seconds")
+total_time = after_finishing - before_starting
+
+print(f"total time required for {total_number_of_pages} pages: {total_time:.2f} seconds")
+print(f"pages-per-minute ratio: {total_number_of_pages / (total_time / 60)}")
